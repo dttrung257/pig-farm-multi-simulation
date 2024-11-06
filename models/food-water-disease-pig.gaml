@@ -1,9 +1,3 @@
-/**
-* Name: FoodWaterDiseasePig
-* Author: Lê Đức Toàn
-*/
-
-
 model FoodWaterDiseasePig
 
 

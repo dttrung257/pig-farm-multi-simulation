@@ -1,9 +1,3 @@
-/**
-* Name: TransmitDiseaseFactor
-* Author: Lê Đức Toàn
-*/
-
-
 model TransmitDiseaseFactor
 
 

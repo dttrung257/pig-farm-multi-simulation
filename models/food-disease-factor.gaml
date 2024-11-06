@@ -1,9 +1,3 @@
-/**
-* Name: FoodDiseaseFactor
-* Author: Lê Đức Toàn
-*/
-
-
 model FoodDiseaseFactor
 
 

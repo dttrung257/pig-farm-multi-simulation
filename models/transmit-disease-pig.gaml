@@ -1,11 +1,3 @@
-/**
-* Name: TransmitDiseasePig
-*  
-* Author: Lê Đức Toàn
-* Tags: 
-*/
-
-
 model TransmitDiseasePig
 
 /* Insert your model definition here */

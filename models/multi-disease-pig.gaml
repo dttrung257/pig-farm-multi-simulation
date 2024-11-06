@@ -1,9 +1,3 @@
-/**
-* Name: MultiDiseasePig
-* Author: Lê Đức Toàn
-*/
-
-
 model MultiDiseasePig
 
 

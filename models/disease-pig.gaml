@@ -1,9 +1,3 @@
-/**
-* Name: DiseasePig
-* Author: Lê Đức Toàn
-*/
-
-
 model DiseasePig
 
 

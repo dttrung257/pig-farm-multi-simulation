@@ -1,9 +1,3 @@
-/**
-* Name: Pig
-* Author: Lê Đức Toàn
-*/
-
-
 model Pig
 
 

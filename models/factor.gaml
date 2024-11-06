@@ -1,9 +1,3 @@
-/**
-* Name: Factor
-* Author: Lê Đức Toàn
-*/
-
-
 model Factor
 
 import './config.gaml'

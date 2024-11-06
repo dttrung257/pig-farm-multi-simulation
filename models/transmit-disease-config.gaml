@@ -1,9 +1,3 @@
-/**
-* Name: TransmitDiseaseConfig
-* Author: Lê Đức Toàn
-*/
-
-
 model TransmitDiseaseConfig
 
 

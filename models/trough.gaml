@@ -1,9 +1,3 @@
-/**
-* Name: Trough
-* Author: Lê Đức Toàn
-*/
-
-
 model Trough
 
 

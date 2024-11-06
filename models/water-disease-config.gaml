@@ -1,9 +1,3 @@
-/**
-* Name: WaterDiseaseConfig
-* Author: Lê Đức Toàn
-*/
-
-
 model WaterDiseaseConfig
 
 

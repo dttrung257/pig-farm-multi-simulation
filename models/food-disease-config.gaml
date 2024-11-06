@@ -1,9 +1,3 @@
-/**
-* Name: FoodDiseaseConfig
-* Author: Lê Đức Toàn
-*/
-
-
 model FoodDiseaseConfig
 
 

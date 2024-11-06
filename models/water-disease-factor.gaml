@@ -1,9 +1,3 @@
-/**
-* Name: WaterDiseaseFactor
-* Author: Lê Đức Toàn
-*/
-
-
 model WaterDiseaseFactor
 
 import './factor.gaml'

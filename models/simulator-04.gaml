@@ -1,9 +1,3 @@
-/**
-* Name: Simulator
-* Author: Lê Đức Toàn
-*/
-
-
 model Simulator
 
 

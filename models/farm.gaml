@@ -1,9 +1,3 @@
-/**
-* Name: Farm
-* Author: Lê Đức Toàn
-*/
-
-
 model Farm
 
 import './factor.gaml'

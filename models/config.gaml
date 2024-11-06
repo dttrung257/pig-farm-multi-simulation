@@ -1,9 +1,3 @@
-/**
-* Name: Config
-* Author: Lê Đức Toàn
-*/
-
-
 model Config
 
 
