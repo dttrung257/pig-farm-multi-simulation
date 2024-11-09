@@ -1,7 +1,6 @@
 /**
-* Name: pigpen2
+* Name: pigpen1
 * Based on the internal empty template. 
-* Author: trungdt
 * Tags: 
 */
 
@@ -17,14 +16,12 @@ import './config.gaml'
 
 global {
 	file pigs;
-	
 	string pigpen_id;
 	string experiment_id;
 	string neighbor_ids;
 	string all_pigpen_ids;
 	string root_output_dir;
 	string output_dir;
-	
 	int day;
 	int final_step;
 	int unexposed_pig_count;
@@ -38,7 +35,6 @@ global {
 	int neighbor_recovered_pigs_count;
 	int dead_pig_count;
 	int scheduled_disease_appearance_day;
-	
 	bool has_cleaned_output_dir;
 	bool has_disease_in_neighbors;
 	bool is_affected_by_neighbor_pen;
@@ -48,13 +44,11 @@ global {
 	bool can_proceed <- false;
 
 	init {
-		pigpen_id <- "2";
-		neighbor_ids <- "1,3";
+		pigpen_id <- "1";
+		neighbor_ids <- "2";
 		all_pigpen_ids <- "1,2,3";
-		
 		root_output_dir <- "../includes/output/multi_simulation";
 		pigs <- csv_file("../includes/input/transmit-disease-pigs.csv", true);
-		
 		total_pigs <- length(pigs);
 		unexposed_pig_count <- 0;
 		exposed_pig_count <- 0;
@@ -62,14 +56,15 @@ global {
 		recovered_pig_count <- 0;
 		dead_pig_count <- 0;
 		scheduled_disease_appearance_day <- -1;
-		
 		create TransmitDiseasePig from: pigs;
 		create Trough number: 5;
 		loop i from: 0 to: 4 {
 			Trough[i].location <- trough_locs[i];
 		}
 
-		is_affected_by_neighbor_pen <- false;
+		create TransmitDiseaseConfig number: 1;
+		TransmitDiseaseConfig[0].day <- 1;
+		is_affected_by_neighbor_pen <- true;
 	}
 
 	reflex stop when: cycle = final_step {
@@ -87,6 +82,7 @@ global {
 		ask configs[0] {
 			do create_factor_and_attach_to(TransmitDiseasePig[random_disease_pig_index]);
 		}
+
 	}
 
 	action schedule_disease_onset {
@@ -150,6 +146,7 @@ global {
 			do set_schedule_day(get_current_day() + rnd(1, 3));
 			is_affected_by_neighbor_pen <- true;
 		}
+
 	}
 
 	int get_current_day {
@@ -167,13 +164,12 @@ global {
 		bool sync_dir_deleted <- delete_file(sync_dir);
 		has_cleaned_output_dir <- true;
 	}
-	
+
 	action detect_disease {
 		unexposed_pig_count <- 0;
 		exposed_pig_count <- 0;
 		infected_pig_count <- 0;
 		recovered_pig_count <- 0;
-		
 		loop pig over: TransmitDiseasePig {
 			switch pig.seir {
 				match UNEXPOSED_STATUS {
@@ -191,10 +187,11 @@ global {
 				match RECOVERED_STATUS {
 					recovered_pig_count <- recovered_pig_count + 1;
 				}
+
 			}
 
 		}
-		
+
 		dead_pig_count <- total_pigs - unexposed_pig_count - exposed_pig_count - infected_pig_count - recovered_pig_count;
 	}
 
@@ -228,17 +225,22 @@ global {
 		save [get_current_day(), total_pigs, unexposed_pig_count, exposed_pig_count, infected_pig_count, recovered_pig_count] to: output_dir + "/" + experiment_id + "-summary.csv"
 		rewrite: false format: "csv";
 	}
-	
+
 	action save_pig_data {
 		loop pig over: TransmitDiseasePig {
 			save
-			[get_current_day(),pig.id, pig.target_dfi, pig.dfi, pig.target_cfi, pig.cfi, pig.weight, pig.eat_count, pig.excrete_each_day, pig.excrete_count, pig.expose_count_per_day, pig.recover_count, pig.seir]
+			[get_current_day(), pig.id, pig.target_dfi, pig.dfi, pig.target_cfi, pig.cfi, pig.weight, pig.eat_count, pig.excrete_each_day, pig.excrete_count, pig.expose_count_per_day, pig.recover_count, pig.seir]
 			to: output_dir + "/" + experiment_id + "-" + string(pig.id) + ".csv" rewrite: false format: "csv";
 		}
+
 	}
 
 	action wait_for_others {
 		if (cycle > 0 and mod(cycle, CYCLES_IN_ONE_DAY) = 0) {
+//			if (!has_cleaned_output_dir) {
+//				do clear_old_output_dir();
+//			}
+
 			// Check pigpen each cycle
 			do detect_disease();
 
@@ -278,38 +280,29 @@ global {
 			can_proceed <- false;
 		}
 	}
+
 }
 
-experiment Pigpen2 {
+experiment Pigpen1 {
 	parameter "Experiment ID" var: experiment_id <- "";
 	parameter "Final Step" var: final_step <- 60 * 24 * 55;
 	output {
 		display Simulator name: "Simulator" {
 			grid Background;
 			species TransmitDiseasePig aspect: base;
-			
 			overlay position: {2, 2} size: {10, 5} background: #black transparency: 1 {
 				draw "Day: " + get_current_day() at: {0, 2} color: #black font: font("Arial", 14, #plain);
-				
-				draw "Unexposed: " + unexposed_pig_count at: {1, 35} 
-					color: #black font: font("Arial", 14, #plain);
-					
-				draw "Exposed: " + exposed_pig_count at: {1, 65} 
-					color: rgb(255, 150, 0) font: font("Arial", 14, #plain);
-					
-				draw "Infected: " + infected_pig_count at: {1, 95} 
-					color: #red font: font("Arial", 14, #plain);
-					
-				draw "Recovered: " + recovered_pig_count at: {1, 125} 
-					color: #green font: font("Arial", 14, #plain);
-					
-				draw "Dead: " + dead_pig_count at: {1, 155} 
-					color: #gray font: font("Arial", 14, #plain);
-					
+				draw "Unexposed: " + unexposed_pig_count at: {1, 35} color: #black font: font("Arial", 14, #plain);
+				draw "Exposed: " + exposed_pig_count at: {1, 65} color: rgb(255, 150, 0) font: font("Arial", 14, #plain);
+				draw "Infected: " + infected_pig_count at: {1, 95} color: #red font: font("Arial", 14, #plain);
+				draw "Recovered: " + recovered_pig_count at: {1, 125} color: #green font: font("Arial", 14, #plain);
+				draw "Dead: " + dead_pig_count at: {1, 155} color: #gray font: font("Arial", 14, #plain);
 				if (infected_pig_count > 0 or exposed_pig_count > 0) {
 					draw "DISEASE DETECTED!" at: {2, 185} color: #red font: font("Arial", 12, #bold);
 				}
+
 			}
+
 		}
 
 		display CFI name: "CFI" refresh: every((60 * 24) #cycles) {
@@ -358,15 +351,14 @@ experiment Pigpen2 {
 
 	}
 
-//	reflex capture when: mod(cycle, PLAY_SPEED) = 0 {
-//		ask simulations {
-//			save (snapshot(self, "Simulator", {500.0, 500.0})) to: output_dir + "/" + experiment_id + "-simulator-" + string(cycle) + ".png";
-//			save (snapshot(self, "CFI", {500.0, 500.0})) to: output_dir + "/" + experiment_id + "-cfi-" + string(cycle) + ".png";
-//			save (snapshot(self, "Weight", {500.0, 500.0})) to: output_dir + "/" + experiment_id + "-weight-" + string(cycle) + ".png";
-//			save (snapshot(self, "CFIPig0", {500.0, 500.0})) to: output_dir + "/" + experiment_id + "-cfipig0-" + string(cycle) + ".png";
-//			save (snapshot(self, "DFIPig0", {500.0, 500.0})) to: output_dir + "/" + experiment_id + "-dfipig0-" + string(cycle) + ".png";
-//		}
-//
-//	}
-
+	//	reflex capture when: mod(cycle, PLAY_SPEED) = 0 {
+	//		ask simulations {
+	//			save (snapshot(self, "Simulator", {500.0, 500.0})) to: output_dir + "/" + experiment_id + "-simulator-" + string(cycle) + ".png";
+	//			save (snapshot(self, "CFI", {500.0, 500.0})) to: output_dir + "/" + experiment_id + "-cfi-" + string(cycle) + ".png";
+	//			save (snapshot(self, "Weight", {500.0, 500.0})) to: output_dir + "/" + experiment_id + "-weight-" + string(cycle) + ".png";
+	//			save (snapshot(self, "CFIPig0", {500.0, 500.0})) to: output_dir + "/" + experiment_id + "-cfipig0-" + string(cycle) + ".png";
+	//			save (snapshot(self, "DFIPig0", {500.0, 500.0})) to: output_dir + "/" + experiment_id + "-dfipig0-" + string(cycle) + ".png";
+	//		}
+	//
+	//	}
 }

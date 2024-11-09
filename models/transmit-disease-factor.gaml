@@ -1,3 +1,8 @@
+/**
+* Name: TransmitDiseaseFactor
+*/
+
+
 model TransmitDiseaseFactor
 
 

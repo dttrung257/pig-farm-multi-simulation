@@ -1,3 +1,8 @@
+/**
+* Name: Farm
+*/
+
+
 model Farm
 
 import './factor.gaml'

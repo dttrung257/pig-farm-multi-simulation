@@ -1,3 +1,8 @@
+/**
+* Name: TransmitDiseaseConfig
+*/
+
+
 model TransmitDiseaseConfig
 
 

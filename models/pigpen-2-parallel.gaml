@@ -1,7 +1,6 @@
 /**
-* Name: pigpen3
+* Name: pigpen1
 * Based on the internal empty template. 
-* Author: trungdt
 * Tags: 
 */
 
@@ -43,12 +42,13 @@ global {
 	bool has_disease_in_neighbors;
 	bool is_affected_by_neighbor_pen;
 
+	// synchronize variables
 	bool is_cycle_complete <- false;
 	bool can_proceed <- false;
 
 	init {
-		pigpen_id <- "3";
-		neighbor_ids <- "2";
+		pigpen_id <- "2";
+		neighbor_ids <- "1,3";
 		all_pigpen_ids <- "1,2,3";
 		
 		root_output_dir <- "../includes/output/multi_simulation";
@@ -92,6 +92,7 @@ global {
 		if (get_current_day() = scheduled_disease_appearance_day) {
 			do attach_disease_to_random_pig();
 		}
+
 	}
 
 	action set_schedule_day (int target_day) {
@@ -236,7 +237,11 @@ global {
 	}
 
 	action wait_for_others {
-		if (mod(cycle, CYCLES_IN_ONE_DAY) = 0) {
+		if (cycle > 0 and mod(cycle, CYCLES_IN_ONE_DAY) = 0) {
+//			if (!has_cleaned_output_dir) {
+//				do clear_old_output_dir();
+//			}
+
 			// Check pigpen each cycle
 			do detect_disease();
 
@@ -250,11 +255,6 @@ global {
 
 			is_cycle_complete <- true;
 			save "" to: root_output_dir + "/sync/" + pigpen_id + "/cycle_" + cycle + "_flag.txt" rewrite: false format: "csv";
-			
-			if (cycle = 0) {
-				return;
-			}
-			
 			loop while: !can_proceed {
 				bool all_complete <- true;
 				list<string> pigpen_id_list <- all_pigpen_ids split_with ",";
@@ -283,7 +283,7 @@ global {
 	}
 }
 
-experiment Pigpen3 {
+experiment Pigpen2 {
 	parameter "Experiment ID" var: experiment_id <- "";
 	parameter "Final Step" var: final_step <- 60 * 24 * 55;
 	output {

@@ -1,3 +1,8 @@
+/**
+* Name: Factor
+*/
+
+
 model Factor
 
 import './config.gaml'

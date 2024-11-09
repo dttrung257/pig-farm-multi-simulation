@@ -1,3 +1,9 @@
+/**
+* Name: TransmitDiseasePig
+* Tags: 
+*/
+
+
 model TransmitDiseasePig
 
 /* Insert your model definition here */

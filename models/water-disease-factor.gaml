@@ -1,3 +1,8 @@
+/**
+* Name: WaterDiseaseFactor
+*/
+
+
 model WaterDiseaseFactor
 
 import './factor.gaml'

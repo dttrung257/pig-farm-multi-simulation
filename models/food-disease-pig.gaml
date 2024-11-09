@@ -1,3 +1,9 @@
+/**
+* Name: FoodDiseasePig
+* Author: Lê Đức Toàn
+*/
+
+
 model FoodDiseasePig
 
 

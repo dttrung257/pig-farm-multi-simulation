@@ -1,3 +1,8 @@
+/**
+* Name: FoodDiseaseConfig
+*/
+
+
 model FoodDiseaseConfig
 
 
