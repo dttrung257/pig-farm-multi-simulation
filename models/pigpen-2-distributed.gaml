@@ -93,11 +93,19 @@ experiment Pigpen2 {
     
     output {
         display Simulator name: "Simulator" {
-            grid Background;
+            grid Background border: (infected_pig_count > 0 or exposed_pig_count > 0) ? #darkorange : #transparent;
             species TransmitDiseasePig aspect: base;
             
             overlay position: {2, 2} size: {10, 5} background: #black transparency: 1 {
-                draw "Day: " + int(cycle / CYCLES_IN_ONE_DAY) at: {0, 2} color: #black font: font("Arial", 14, #plain);
+                int current_minutes <- cycle mod 60;
+                int current_hours <- (cycle / 60) mod 24;
+                int current_days <- int(cycle / (24 * 60));
+                
+                string time_display <- "Day " + current_days + ", " + 
+                    (current_hours < 10 ? "0" : "") + current_hours + ":" + 
+                    (current_minutes < 10 ? "0" : "") + current_minutes;
+                    
+                draw time_display at: {0, 2} color: #black font: font("Arial", 14, #plain);
                 draw "Unexposed: " + unexposed_pig_count at: {1, 35} color: #black font: font("Arial", 14, #plain);
                 draw "Exposed: " + exposed_pig_count at: {1, 65} color: rgb(255, 150, 0) font: font("Arial", 14, #plain);
                 draw "Infected: " + infected_pig_count at: {1, 95} color: #red font: font("Arial", 14, #plain);
