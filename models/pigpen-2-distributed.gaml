@@ -23,7 +23,7 @@ global parent: BasePigpenModel {
         all_pigpen_ids <- "1,2,3,4,5,6";
         
         // Setup database helper
-        current_run_id <- 1;
+        // current_run_id <- 1;
         do setup_database();
         
         // Initialize pigpen
