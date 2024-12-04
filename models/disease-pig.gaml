@@ -1,5 +1,6 @@
 /**
 * Name: DiseasePig
+* Author: Lê Đức Toàn
 */
 
 
@@ -74,19 +75,19 @@ species DiseasePig parent: Pig {
 	
 	aspect base {
 		if(seir = 0) {
-			draw circle(1.6) color: #pink;
+			draw image("../includes/images/pig.png") size: 5.0;
 			draw string(id) color: #black size: 5;
 		}
 		else if(seir = 1) {
-			draw circle(1.6) color: #yellow;
+			draw image("../includes/images/pig_yellow.png") size: 5.0;
 			draw string(id) color: #black size: 5;
 		}
 		else if(seir = 2) {
-			draw circle(1.6) color: #red;
+			draw image("../includes/images/pig_red.png") size: 5.0;
 			draw string(id) color: #black size: 5;
 		}
 		else if(seir = 3) {
-			draw circle(1.6) color: #lightgreen;
+			draw image("../includes/images/pig_green.png") size: 5.0;
 			draw string(id) color: #black size: 5;
 		}
     }

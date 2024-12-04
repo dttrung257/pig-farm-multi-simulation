@@ -5,19 +5,22 @@
 */
 model BasePigpenModel
 
-import "./database-helper.gaml"
+import "./database-helper-3.gaml"
 import './transmit-disease-pig.gaml'
+import "./database-helper.gaml"
 
 global {
 	// Database related
-	int current_run_id;
-	DatabaseHelper db_helper;
+	int run_id;
+	bool sync;
+	DatabaseHelper3 db_helper;
 
 	// Pigpen identification
 	string pigpen_id;
 	string experiment_id;
 	string neighbor_ids;
 	string all_pigpen_ids;
+//	string pig_ids;
 
 	// Common metrics
 	int unexposed_pig_count;
@@ -38,7 +41,7 @@ global {
 	int scheduled_disease_appearance_day;
 
 	action setup_database {
-		create DatabaseHelper returns: helpers;
+		create DatabaseHelper3 returns: helpers;
 		db_helper <- helpers[0];
 	}
 
@@ -46,18 +49,17 @@ global {
 		if (mod(cycle_number, CYCLES_IN_ONE_DAY) = 0) {
 			// Mark current cycle as complete
 			ask db_helper {
-				do mark_cycle_complete(myself.current_run_id, int(myself.pigpen_id), cycle_number);
+				do mark_cycle_complete(myself.run_id, int(myself.pigpen_id), cycle_number);
 			}
 
 			// Wait for all pigpens to complete
 			bool can_proceed <- false;
-			loop while: !can_proceed {
+			loop while: (!can_proceed and sync) {
 				ask db_helper {
-					can_proceed <- self.are_all_pigpens_complete(myself.current_run_id, cycle_number, (myself.all_pigpen_ids split_with ","));
+					can_proceed <- self.are_all_pigpens_complete(myself.run_id, cycle_number, (myself.all_pigpen_ids split_with ","));
 				}
 
 			}
-
 		}
 
 	}
@@ -65,8 +67,7 @@ global {
 	action check_neighbor_states (int day) {
 		list<string> neighbor_list <- neighbor_ids split_with ",";
 		ask db_helper {
-			list<list> states <- get_neighbor_states(myself.current_run_id, neighbor_list, day);
-			write states;
+			list<list> states <- get_neighbor_states(myself.run_id, neighbor_list, day);
 
 			// Reset counts
 			myself.neighbor_unexposed_pigs_count <- 0;
@@ -89,11 +90,33 @@ global {
 		}
 
 	}
+	
+	action save_pig_daily_data(int day) {
+    	loop pig over: TransmitDiseasePig {
+        	ask db_helper {
+            	do save_pig_data_daily(
+                	myself.run_id, 
+                	int(myself.pigpen_id),
+                	day,
+                	pig.id,
+                	pig.dfi,
+                	pig.cfi,
+                	pig.target_cfi,
+                	pig.target_dfi,
+                	pig.weight,
+                	pig.eat_count,
+                	pig.excrete_count,
+                	pig.seir
+            	);
+        	}
+    	}
+	}
+
 
 	action save_daily_state (int day) {
 		ask db_helper {
 			do
-			save_pigpen_state(myself.current_run_id, int(myself.pigpen_id), day, myself.total_pigs, myself.unexposed_pig_count, myself.exposed_pig_count, myself.infected_pig_count, myself.recovered_pig_count);
+			save_pigpen_state(myself.run_id, int(myself.pigpen_id), day, myself.total_pigs, myself.unexposed_pig_count, myself.exposed_pig_count, myself.infected_pig_count, myself.recovered_pig_count);
 		}
 
 	}

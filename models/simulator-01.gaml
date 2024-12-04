@@ -36,6 +36,18 @@ experiment Normal {
         display Simulator name: "Simulator" {
             grid Background border: #black;
             species Pig aspect: base;
+            
+            overlay position: {2, 2} size: {10, 5} background: #black transparency: 1 {
+                int current_minutes <- cycle mod 60;
+                int current_hours <- (cycle / 60) mod 24;
+                int current_days <- int(cycle / (24 * 60));
+                
+                string time_display <- "Day " + current_days + ", " + 
+                    (current_hours < 10 ? "0" : "") + current_hours + ":" + 
+                    (current_minutes < 10 ? "0" : "") + current_minutes;
+                    
+                draw time_display at: {0, 2} color: #black font: font("Arial", 14, #plain);
+            }
         }
         display CFI name: "CFI" refresh: every((60 * 24)#cycles) {
         	chart "CFI" type: series {
@@ -84,7 +96,7 @@ experiment Normal {
 		}
     }
     
-    reflex capture when: mod(cycle, speed) = 0 {
+    reflex capture when: mod(cycle, 45) = 0 {
     	ask simulations {
     		save (snapshot(self, "Simulator", {500.0, 500.0})) to: "../includes/output/normal/" + experiment_id + "-simulator-" + string(cycle) + ".png";
     		save (snapshot(self, "CFI", {500.0, 500.0})) to: "../includes/output/normal/" + experiment_id + "-cfi-" + string(cycle) + ".png";
