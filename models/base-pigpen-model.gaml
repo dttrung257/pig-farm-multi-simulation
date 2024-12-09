@@ -5,7 +5,7 @@
 */
 model BasePigpenModel
 
-import "./database-helper-3.gaml"
+import "./database-helper.gaml"
 import './transmit-disease-pig.gaml'
 import "./database-helper.gaml"
 
@@ -13,7 +13,7 @@ global {
 	// Database related
 	int run_id;
 	bool sync;
-	DatabaseHelper3 db_helper;
+	DatabaseHelper db_helper;
 
 	// Pigpen identification
 	string pigpen_id;
@@ -41,7 +41,7 @@ global {
 	int scheduled_disease_appearance_day;
 
 	action setup_database {
-		create DatabaseHelper3 returns: helpers;
+		create DatabaseHelper returns: helpers;
 		db_helper <- helpers[0];
 	}
 

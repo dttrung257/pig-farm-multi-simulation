@@ -7,14 +7,14 @@
 model DatabaseHelper
 
 global {
-     map<string, string> DB_PARAMS <- [  
-        'host'::'localhost',
+    map<string, string> DB_PARAMS <- [  
+        'host'::'54.251.16.4',
         'dbtype'::'mysql',
         'database'::'ags',
-        'port'::'13306', 
+        'port'::'3306', 
         'user'::'agsuser',
-        'passwd'::'123'
-     ];
+        'passwd'::'mysql123456'
+    ];
 }
 
 species DatabaseHelper skills: [SQLSKILL] {
