@@ -17,7 +17,7 @@ global {
 //     ];
      
      map<string, string> DB_PARAMS <- [  
-        'host'::'172.30.11.8',
+        'host'::'52.77.225.196',
         'dbtype'::'mysql',
         'database'::'ags',
         'port'::'3306', 
@@ -28,12 +28,21 @@ global {
 
 species DatabaseHelper3 parent: AgentDB {
     bool is_connected <- false;
+    bool is_connecting <- false; 
     
     init {
         do setParameter(params: DB_PARAMS);
     }
     
     action ensure_connection {
+        // Check if already connected
+        if (is_connected) { return; }
+        
+        // Check if another connection attempt is in progress
+        if (is_connecting) { return; }
+        
+        is_connecting <- true;
+        
         if (!is_connected) {
             do connect(params: self.getParameter());
             is_connected <- self.isConnected();
@@ -41,6 +50,8 @@ species DatabaseHelper3 parent: AgentDB {
                 write "WARNING: Could not connect to database. Will retry later.";
             }
         }
+        
+        is_connecting <- false;
     }
     
     action execute_safely (string operation) {
@@ -265,4 +276,127 @@ species DatabaseHelper3 parent: AgentDB {
             is_connected <- false;
         }
     }
+    
+//    action save_pig_movement(int run_id, int pigpen_id, int pig_id, int cycle, point loc, int seir, string movement_type) {
+//    	do ensure_connection();
+//    	if (!is_connected) { return; }
+//    
+//    	try {
+//        	do insert(
+//            	into: "pig_movement_history",
+//            	columns: ["run_id", "pigpen_id", "pig_id", "cycle", "x", "y", "seir", "movement_type"],
+//            	values: [run_id, pigpen_id, pig_id, cycle, loc.x, loc.y, seir, movement_type]
+//        	);
+//    	} catch {
+//        	write "ERROR: Failed to save pig movement in database";
+//        	is_connected <- false;
+//    	}
+//	}
+	
+    action save_pig_position(int run_id, int pigpen_id, int cycle_number, int pig_id, int position, int seir, float x_coord, float y_coord) {
+        do ensure_connection();
+        if (!is_connected) { return; }
+        
+        try {
+            do insert(
+                into: "pig_movement_history",
+                columns: ["run_id", "pigpen_id", "cycle", "pig_id", "position", 
+                         "seir", "x", "y"],
+                values: [run_id, pigpen_id, cycle_number, pig_id, position, seir, 
+                        x_coord, y_coord]
+            );
+        } catch {
+            write "ERROR: Failed to save pig position data in database";
+            is_connected <- false;
+        }
+    }
+    
+	action batch_insert_positions(list<list> values) {
+//    	do ensure_connection();
+//    	if (!is_connected) { return; }
+    
+    	try {
+        	// Construct batch insert query
+        	string query <- "INSERT INTO pig_movement_history (run_id, pigpen_id, cycle, pig_id, position, seir, x, y) VALUES";
+        
+        	// Add placeholders for each record
+        	loop i over: range(length(values)) {
+        		list<unknown> record <- values[i];
+            	loop j over: range(length(record)) {
+            		query <- query + record[j];
+            		if (j < length(record) - 1) {
+            			query <- query + ",";
+            		}
+            	}
+            	
+            	if (i < length(values) - 1) {
+        			query <- query + "), (";
+    			}
+        	}
+        	query <- query + ")";
+        	
+        	loop i over: range(length(values)) {
+                list<unknown> record <- values[i];
+                query <- query + "(" + string(record[0]) + "," + string(record[1]) + "," + string(record[2]) + "," + string(record[3]) + "," + string(record[4]) + "," + string(record[5]) + "," + string(record[6]) + "," + string(record[7]) + ")";
+                if (i < length(values) - 1) {
+                    query <- query + ",";
+                }
+            }
+            write query;
+        	
+        	// Execute batch insert
+        	do executeUpdate(
+            	updateComm: query
+        	);
+        	
+    	} catch {
+        	write "ERROR: Failed to perform batch insert of pig positions";
+        	is_connected <- false;
+        	
+    	}
+	}
+	
+//	action batch_insert_positions(list<list> values) {
+//    	try {
+//        	string query <- "INSERT INTO pig_movement_history (run_id, pigpen_id, cycle, pig_id, position, seir, x, y) VALUES ";
+//        
+//        	loop i over: range(length(values)) {
+//            	list<unknown> record <- values[i];
+//            	query <- query + "(" + string(record[0]) + ", " + string(record[1]) + ", " + string(record[2]) + ", " + string(record[3]) + ", " + string(record[4]) + ", " + string(record[5]) + ", " + string(record[6]) + ", " + string(record[7]) + ")";
+//            	if (i < length(values) - 1) {
+//                	query <- query + ", ";
+//            	}
+//        	}
+//        	write query;
+//        
+//        	do executeUpdate(updateComm: query);
+//    	} catch {
+//        	write "ERROR: Failed to perform batch insert of pig positions";
+////        	write e;
+//        	is_connected <- false;
+//    	}
+//	}
+
+//action batch_insert_positions(list<list> positions) {
+//    do ensure_connection();
+//    if (!is_connected) { return; }
+//    
+//    try {
+//        string query <- "INSERT INTO pig_movement_history (run_id, pigpen_id, cycle, pig_id, position, seir, x, y) VALUES ";
+//        bool first <- true;
+//        
+//        loop pos over: positions {
+//            if (!first) { query <- query + ","; }
+//            query <- query + "(" + pos[0] + "," + pos[1] + "," + pos[2] + "," + 
+//                    pos[3] + "," + pos[4] + "," + pos[5] + "," + pos[6] + "," + pos[7] + ")";
+//            first <- false;
+//        }
+//        
+//        do executeUpdate(updateComm: query);
+//    } catch {
+//        write "ERROR: Failed to batch insert pig positions";
+//        is_connected <- false;
+//    }
+//}
+
 }

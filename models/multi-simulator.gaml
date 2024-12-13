@@ -18,6 +18,14 @@ global parent: BasePigpenModel {
     int dead_pig_count;
     string pig_ids;
     int init_disease_appear_day;
+    map<string, string> DB_PARAMS <- [  
+        'host'::'localhost',
+        'dbtype'::'mysql',
+        'database'::'ags',
+        'port'::'13306', 
+        'user'::'agsuser',
+        'passwd'::'123'
+     ];
     
     init {
         // This flag is used to run sync or async simulation
@@ -26,6 +34,7 @@ global parent: BasePigpenModel {
         } else {
             sync <- false;
         }
+//		sync <- false;
         
         // Setup database helper
         do setup_database();
@@ -44,6 +53,10 @@ global parent: BasePigpenModel {
                 id <- pig_id;
             }
         }
+        
+//        loop pig_id over: pig_list {
+//        	put 0 key: int(pig_id) in: previous_positions;
+//    	}
         
         create Trough number: 5;
         loop i from: 0 to: 4 {
@@ -69,6 +82,132 @@ global parent: BasePigpenModel {
         }
     }
     
+    action attach_disease_to_pig(int pig_id) {
+    	if (pig_id >= 0 and pig_id < length(TransmitDiseasePig)) {
+    		loop pig over: TransmitDiseasePig {
+    			if (pig.id = pig_id) {
+        			create TransmitDiseaseConfig number: 1 returns: configs;
+        			ask configs[0] {
+            			do create_factor_and_attach_to(pig);
+        			}
+        		}
+        	}
+    	}
+	}
+    
+//	action check_neighbor_pig_positions(int day) {
+//    	if (!has_disease_in_neighbors) { return; }
+//    	
+//    	list<string> neighbor_list <- neighbor_ids split_with ",";
+//    	list<int> pigs_to_infect <- [];
+//    	
+//    	ask db_helper {
+//        	string query <- "SELECT x, y, pig_id FROM pig_movement_history WHERE run_id = ? AND pigpen_id IN (" + 
+//            	           neighbor_list + ") AND cycle = ? AND (seir = 1 OR seir = 2)";
+//        	list<list> infected_positions <- self.select(query, [myself.run_id, day * CYCLES_IN_ONE_DAY]);
+//        	
+//        	if (!empty(infected_positions) and !empty(infected_positions[2])) {
+//            	loop infected_pos over: infected_positions[2] {
+//                	point infected_location <- {float(infected_pos[0]), float(infected_pos[1])};
+//                
+//                	ask TransmitDiseasePig {
+//                    	if (seir = 0) {
+//                        	float dist <- infected_location distance_to self.location;
+//                        	if (dist < 5.0 and !(pigs_to_infect contains self.id)) {
+//                            	add self.id to: pigs_to_infect;
+//                        	}
+//                    	}
+//                	}
+//            	}
+//        	}
+//    	}
+//    	
+//    	// Apply infections after gathering all affected pigs
+//    	loop pig_id over: pigs_to_infect {
+//        	do attach_disease_to_pig(pig_id);
+//    	}
+//	}
+
+	action check_neighbor_pig_positions_left(int day) {
+    	if (day <= 0) { return; }
+    	
+    	// First check if neighbors have disease 
+    	do check_neighbor_states(day);
+    	
+    	if (!has_disease_in_neighbor_left) { return; }
+    	
+    	// Then check pig positions in current pen
+    	float b <- rnd(0.402, 1.85);
+    	list<int> pigs_to_infect <- [];
+    	
+    	ask db_helper {
+        	string query <- "SELECT DISTINCT pig_id FROM pig_movement_history " +
+            	           "WHERE run_id = ? AND pigpen_id = ? " +
+                	       "AND cycle <= ? AND cycle >= ? AND x <= 2.0";
+                       
+        	list<list> boundary_pigs <- self.select(DB_PARAMS, query, [myself.run_id, int(myself.pigpen_id), 
+            	                                   day * CYCLES_IN_ONE_DAY, (day - 1) * CYCLES_IN_ONE_DAY]);
+        
+        	if (!empty(boundary_pigs[2])) {
+            	loop pig_pos over: boundary_pigs[2] {
+                	int pig_id <- int(pig_pos[0]);
+                	loop pig over: TransmitDiseasePig {
+                    	if (pig.id = pig_id and pig.seir = 0 and flip(1 - e ^ -b) and !(pigs_to_infect contains pig_id)) {
+                        	pigs_to_infect <- pigs_to_infect + [pig_id];
+                    	}
+                	}
+            	}
+        	}
+    	}
+    	
+    	// Infect the pigs that were near boundary
+    	if (!empty(pigs_to_infect)) {
+        	int random_index <- rnd(length(pigs_to_infect) - 1);
+        	do attach_disease_to_pig(pigs_to_infect[random_index]);
+    	}
+	}
+
+	
+	action check_neighbor_pig_positions_right(int day) {
+    	if (day <= 0) { return; }
+    	
+    	// First check if neighbors have disease
+    	do check_neighbor_states(day);
+    	
+    	if (!has_disease_in_neighbor_right) { return; }
+    	
+    	// Then check pig positions in current pen
+    	float b <- rnd(0.402, 1.85);
+    	list<int> pigs_to_infect <- [];
+    
+    	ask db_helper {
+        	string query <- "SELECT DISTINCT pig_id FROM pig_movement_history " +
+            	           "WHERE run_id = ? AND pigpen_id = ? " +
+                	       "AND cycle <= ? AND cycle >= ? AND x >= 93.0";
+                       
+        	list<list> boundary_pigs <- self.select(DB_PARAMS, query,
+        		[myself.run_id, int(myself.pigpen_id), day * CYCLES_IN_ONE_DAY, (day - 1) * CYCLES_IN_ONE_DAY]
+        	);
+        	
+        	if (!empty(boundary_pigs[2])) {
+            	loop pig_pos over: boundary_pigs[2] {
+                	int pig_id <- int(pig_pos[0]);
+					loop pig over: TransmitDiseasePig {
+						if (pig.id = pig_id and pig.seir = 0 and flip(1 - e ^ -b) and !(pigs_to_infect contains pig_id)) {
+							pigs_to_infect <- pigs_to_infect + [pig_id];
+						}
+					}
+            	}
+        	}
+    	}
+    	
+    	// Infect the pigs that were near boundary
+    	if (!empty(pigs_to_infect)) {
+        	int random_index <- rnd(length(pigs_to_infect) - 1);
+        	do attach_disease_to_pig(pigs_to_infect[random_index]);
+    	}
+	}
+    
     reflex daily when: mod(cycle, CYCLES_IN_ONE_DAY) = 0 {
         int current_day <- int(cycle / CYCLES_IN_ONE_DAY);
         
@@ -79,14 +218,23 @@ global parent: BasePigpenModel {
         // Save state and synchronize
         do save_daily_state(current_day);
         do save_pig_daily_data(current_day);
+//        do save_position_changes();
+        
+//        if (length(neighbor_ids) > 0) { 
+////            do check_neighbor_states(current_day);
+//            do check_neighbor_pig_positions_left(current_day - 1);
+//            do check_neighbor_pig_positions_right(current_day - 1);
+//        }
         do wait_for_cycle_completion(cycle);
         
         // Check neighbors and schedule disease if needed
         if (length(neighbor_ids) > 0) { 
             do check_neighbor_states(current_day);
+            do check_neighbor_pig_positions_left(current_day);
+            do check_neighbor_pig_positions_right(current_day);
         }
         if (has_disease_in_neighbors and !is_affected_by_neighbor_pen) {
-            scheduled_disease_appearance_day <- current_day + rnd(1,3);
+            scheduled_disease_appearance_day <- current_day + 1;
             is_affected_by_neighbor_pen <- true;
         }
         
@@ -96,16 +244,40 @@ global parent: BasePigpenModel {
         }
     }
     
+    reflex disease_transmit {
+    	float b <- rnd(0.402, 1.85);
+    	list<int> pigs_to_infect <- [];
+    	
+    	int current_day <- int(cycle / CYCLES_IN_ONE_DAY);
+    	if (current_day = scheduled_disease_appearance_day) {
+    		bool affected <- false;
+            loop pig over: TransmitDiseasePig {
+            	if (pig.location.x <= 2 and pig.seir = 0 and flip(1 - e ^ -b) and !affected) {
+            		create TransmitDiseaseConfig number: 1 returns: configs;
+        			ask configs[0] {
+            			do create_factor_and_attach_to(pig);
+        			}
+        			affected <- true;
+            	}
+            }
+        }
+        
+        if (!empty(pigs_to_infect)) {
+        	int random_index <- rnd(length(pigs_to_infect) - 1);
+        	do attach_disease_to_pig(pigs_to_infect[random_index]);
+    	}
+    }
+    
     reflex stop when: cycle = final_step {
         do pause;
     }
 }
 
 experiment MultiSimulation {
-    parameter "Run_id" var: run_id <- 1;
+    parameter "Run_id" var: run_id <- 28;
     parameter "Final_step" var: final_step <- 150 * 24 * 55;
-    parameter "Pigpen_id" var: pigpen_id <- "1";
-    parameter "Neighbor_ids" var: neighbor_ids <- "";
+    parameter "Pigpen_id" var: pigpen_id <- "2";
+    parameter "Neighbor_ids" var: neighbor_ids <- "1";
     parameter "All_pigpen_ids" var: all_pigpen_ids <- "";
     parameter "Pig_ids" var: pig_ids <- "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19";
     parameter "Init_disease_appear_day" var: init_disease_appear_day <- -1;
